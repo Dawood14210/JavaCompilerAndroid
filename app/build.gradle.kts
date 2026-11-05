@@ -66,13 +66,16 @@ val copyJavaClasspathAssets by tasks.registering {
             when (artifact.extension.lowercase()) {
                 "jar" -> artifact.copyTo(File(outputDir, "$index-${artifact.name}"), overwrite = true)
                 "aar" -> java.util.zip.ZipFile(artifact).use { archive ->
-                    archive.entries().asSequence()
-                        .filter { !it.isDirectory && (it.name == "classes.jar" || it.name.startsWith("libs/") && it.name.endsWith(".jar")) }
-                        .forEachIndexed { innerIndex, entry ->
+                    val entries: java.util.Enumeration<java.util.zip.ZipEntry> = archive.entries()
+                    var innerIndex = 0
+                    while (entries.hasMoreElements()) {
+                        val entry: java.util.zip.ZipEntry = entries.nextElement()
+                        if (!entry.isDirectory && (entry.name == "classes.jar" || entry.name.startsWith("libs/") && entry.name.endsWith(".jar"))) {
                             archive.getInputStream(entry).use { input ->
-                                File(outputDir, "$index-$innerIndex-${File(entry.name).name}").outputStream().use { output -> input.copyTo(output) }
+                                File(outputDir, "$index-${innerIndex++}-${File(entry.name).name}").outputStream().use { output -> input.copyTo(output) }
                             }
                         }
+                    }
                 }
             }
         }
