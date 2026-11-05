@@ -31,7 +31,19 @@ jobs:
         run: sdkmanager "platforms;android-34" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Assemble debug APK
-        run: ./gradlew :app:assembleDebug
+        run: |
+          set +e
+          ./gradlew :app:assembleDebug --stacktrace > gradle-build.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            tail -n 80 gradle-build.log | while IFS= read -r line; do
+              line=${line//'%'/'%25'}
+              line=${line//$'\r'/'%0D'}
+              line=${line//$'\n'/'%0A'}
+              echo "::error::$line"
+            done
+          fi
+          exit "$status"
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
