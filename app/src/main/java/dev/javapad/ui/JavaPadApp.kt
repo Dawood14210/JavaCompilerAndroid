@@ -471,7 +471,7 @@ private fun EditorPane(
                 val adjustedStops = activeTabStops.mapIndexed { index, offset ->
                     if (index >= nextTabStop) offset + delta else offset
                 }
-                val target = adjustedStops[nextTabStop].coerceIn(0, editor.text.length())
+                val target = adjustedStops[nextTabStop].coerceIn(0, editor.text.length)
                 val position = editor.text.indexer.getCharPosition(target)
                 editor.setSelection(position.line, position.column)
                 activeTabStops = adjustedStops
@@ -580,7 +580,7 @@ private fun createDiagnostics(editor: CodeEditor, problems: List<CompileProblem>
         val line = (problem.line - 1).coerceIn(0, editor.lineCount - 1)
         val column = (problem.column - 1).coerceIn(0, editor.text.getColumnCount(line))
         val start = editor.text.getCharIndex(line, column)
-        val end = (start + problem.length.coerceAtLeast(1)).coerceAtMost(editor.text.length())
+        val end = (start + problem.length.coerceAtLeast(1)).coerceAtMost(editor.text.length)
         val severity = if (problem.isWarning) DiagnosticRegion.SEVERITY_WARNING else DiagnosticRegion.SEVERITY_ERROR
         diagnostics.addDiagnostic(
             DiagnosticRegion(start, end, severity, index.toLong(), DiagnosticDetail(problem.message)),
