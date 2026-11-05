@@ -1,4 +1,7 @@
 import java.io.File
+import java.util.Enumeration
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
 import org.gradle.api.tasks.Copy
 
 plugins {
@@ -65,11 +68,11 @@ val copyJavaClasspathAssets by tasks.registering {
         debugRuntimeClasspath.get().files.forEachIndexed { index, artifact ->
             when (artifact.extension.lowercase()) {
                 "jar" -> artifact.copyTo(File(outputDir, "$index-${artifact.name}"), overwrite = true)
-                "aar" -> java.util.zip.ZipFile(artifact).use { archive ->
-                    val entries: java.util.Enumeration<java.util.zip.ZipEntry> = archive.entries()
+                "aar" -> ZipFile(artifact).use { archive ->
+                    val entries: Enumeration<ZipEntry> = archive.entries()
                     var innerIndex = 0
                     while (entries.hasMoreElements()) {
-                        val entry: java.util.zip.ZipEntry = entries.nextElement()
+                        val entry: ZipEntry = entries.nextElement()
                         if (!entry.isDirectory && (entry.name == "classes.jar" || entry.name.startsWith("libs/") && entry.name.endsWith(".jar"))) {
                             archive.getInputStream(entry).use { input ->
                                 File(outputDir, "$index-${innerIndex++}-${File(entry.name).name}").outputStream().use { output -> input.copyTo(output) }
