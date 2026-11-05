@@ -54,7 +54,7 @@ val copyAndroidJarAsset by tasks.registering(Copy::class) {
     into(generatedAndroidJarAssets)
     rename { "android.jar" }
 }
-val debugRuntimeClasspath = configurations.named("debugRuntimeClasspath")
+val debugRuntimeClasspath = configurations.matching { it.name == "debugRuntimeClasspath" }
 val copyJavaClasspathAssets by tasks.registering {
     inputs.files(debugRuntimeClasspath)
     outputs.dir(generatedClasspathAssets)
@@ -63,7 +63,7 @@ val copyJavaClasspathAssets by tasks.registering {
             parentFile.deleteRecursively()
             mkdirs()
         }
-        debugRuntimeClasspath.get().files.forEachIndexed { index, artifact ->
+        configurations.getByName("debugRuntimeClasspath").files.forEachIndexed { index, artifact ->
             when (artifact.extension.lowercase()) {
                 "jar" -> artifact.copyTo(File(outputDir, "$index-${artifact.name}"), overwrite = true)
                 "aar" -> ZipFile(artifact).use { archive ->
