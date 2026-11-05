@@ -22,9 +22,9 @@ class MainActivity : ComponentActivity() {
             val settingsViewModel: SettingsViewModel = hiltViewModel()
             val settings by settingsViewModel.settings.collectAsState()
             JavaPadTheme(mode = settings.theme) {
+                val barColor = androidx.compose.material3.MaterialTheme.colorScheme.background.toArgb()
                 SideEffect {
                     val isLight = settings.theme == dev.javapad.settings.AppThemeMode.LIGHT
-                    val barColor = androidx.compose.material3.MaterialTheme.colorScheme.background.toArgb()
                     window.statusBarColor = barColor
                     window.navigationBarColor = barColor
                     WindowCompat.getInsetsController(window, window.decorView).apply {

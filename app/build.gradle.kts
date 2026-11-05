@@ -1,4 +1,5 @@
 import java.io.File
+import java.util.zip.ZipFile
 import org.gradle.api.tasks.Copy
 
 plugins {
@@ -23,6 +24,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -53,7 +55,7 @@ val copyAndroidJarAsset by tasks.registering(Copy::class) {
     into(generatedAndroidJarAssets)
     rename { "android.jar" }
 }
-val debugRuntimeClasspath = configurations.named("debugRuntimeClasspath")
+val debugRuntimeClasspath = configurations.matching { it.name == "debugRuntimeClasspath" }
 val copyJavaClasspathAssets by tasks.registering {
     inputs.files(debugRuntimeClasspath)
     outputs.dir(generatedClasspathAssets)
@@ -62,17 +64,20 @@ val copyJavaClasspathAssets by tasks.registering {
             parentFile.deleteRecursively()
             mkdirs()
         }
-        debugRuntimeClasspath.get().files.forEachIndexed { index, artifact ->
+        configurations.getByName("debugRuntimeClasspath").files.forEachIndexed { index, artifact ->
             when (artifact.extension.lowercase()) {
                 "jar" -> artifact.copyTo(File(outputDir, "$index-${artifact.name}"), overwrite = true)
-                "aar" -> java.util.zip.ZipFile(artifact).use { archive ->
-                    archive.entries().asSequence()
-                        .filter { !it.isDirectory && (it.name == "classes.jar" || it.name.startsWith("libs/") && it.name.endsWith(".jar")) }
-                        .forEachIndexed { innerIndex, entry ->
+                "aar" -> ZipFile(artifact).use { archive ->
+                    val entries = archive.entries()
+                    var innerIndex = 0
+                    while (entries.hasMoreElements()) {
+                        val entry = entries.nextElement()
+                        if (!entry.isDirectory && (entry.name == "classes.jar" || entry.name.startsWith("libs/") && entry.name.endsWith(".jar"))) {
                             archive.getInputStream(entry).use { input ->
-                                File(outputDir, "$index-$innerIndex-${File(entry.name).name}").outputStream().use { output -> input.copyTo(output) }
+                                File(outputDir, "$index-${innerIndex++}-${File(entry.name).name}").outputStream().use { output -> input.copyTo(output) }
                             }
                         }
+                    }
                 }
             }
         }
@@ -92,6 +97,8 @@ kapt {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)

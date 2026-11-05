@@ -59,7 +59,7 @@ class CompletionEngine @Inject constructor() {
                 }
                 candidates += CompletionSuggestion(
                     method.nameAsString, CompletionKind.METHOD, method.typeAsString,
-                    method.declarationAsString(false, false, true),
+                    methodSignature(method),
                 )
             }
             parsed.findAll(FieldDeclaration::class.java).forEach { field ->
@@ -104,6 +104,9 @@ class CompletionEngine @Inject constructor() {
             .toList()
     }
 
+    private fun methodSignature(method: MethodDeclaration): String =
+        "${method.typeAsString} ${method.nameAsString}(${method.parameters.joinToString(", ") { it.type.asString() }})"
+
     private data class ProjectType(
         val name: String,
         val qualifiedName: String,
@@ -140,7 +143,7 @@ class CompletionEngine @Inject constructor() {
                     method.nameAsString,
                     CompletionKind.MEMBER,
                     method.typeAsString,
-                    method.declarationAsString(false, false, true),
+                    methodSignature(method),
                 )
             }
             projectType.declaration.findAll(FieldDeclaration::class.java).forEach { field ->

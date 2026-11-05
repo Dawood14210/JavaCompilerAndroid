@@ -96,7 +96,7 @@ class JavaRunnerService : Service() {
             var previousErr: PrintStream? = null
             var previousIn: InputStream? = null
             try {
-                sendOutput("Compiling Java source with ECJ…\n")
+                sendOutput("Compiling Java source with ECJ…\n", stderr = false)
                 val runsRoot = File(cacheDir, "javapad-runs")
                 runsRoot.listFiles()?.forEach { it.deleteRecursively() }
                 val workDir = File(runsRoot, System.nanoTime().toString()).apply { mkdirs() }
@@ -123,7 +123,7 @@ class JavaRunnerService : Service() {
                     return@launch
                 }
 
-                sendOutput("Converting bytecode to DEX…\n")
+                sendOutput("Converting bytecode to DEX…\n", stderr = false)
                 val dexDir = File(workDir, "dex").apply { mkdirs() }
                 withContext(Dispatchers.Default) {
                     D8.run(

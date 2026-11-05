@@ -31,7 +31,26 @@ jobs:
         run: sdkmanager "platforms;android-34" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Assemble debug APK
-        run: ./gradlew :app:assembleDebug
+        run: |
+          set +e
+          ./gradlew :app:assembleDebug --stacktrace > gradle-build.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            compiler_errors=$(grep -E '^(e: |.* error:)' gradle-build.log | head -n 20)
+            failure_summary=$(grep -A10 '^\* What went wrong:' gradle-build.log | head -n 11)
+            diagnostics="$compiler_errors"
+            if [ -n "$failure_summary" ]; then
+              diagnostics="${diagnostics}${diagnostics:+$'\n'}$failure_summary"
+            fi
+            if [ -z "$diagnostics" ]; then
+              diagnostics=$(tail -n 12 gradle-build.log)
+            fi
+            diagnostics=${diagnostics//'%'/'%25'}
+            diagnostics=${diagnostics//$'\r'/'%0D'}
+            diagnostics=${diagnostics//$'\n'/'%0A'}
+            echo "::error::$diagnostics"
+          fi
+          exit "$status"
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
