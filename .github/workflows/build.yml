@@ -22,6 +22,10 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # setup-android@v3 defaults to the deprecated `tools` SDK package.
+          # Override its package list; this action installs cmdline-tools itself.
+          packages: platform-tools
 
       - name: Install Android platform and build tools
         run: sdkmanager "platforms;android-34" "platforms;android-35" "build-tools;35.0.0"
